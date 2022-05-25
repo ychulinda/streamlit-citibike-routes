@@ -2,6 +2,7 @@ import pandas as pd
 import folium
 import streamlit as st
 from streamlit_folium import folium_static
+import base64
 
 st.set_page_config(
      page_title="Top Routes App",
@@ -27,6 +28,13 @@ def load_trip_data():
     return df
 
 
+def file_download(df):
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()  # strings <-> bytes conversions
+    href = f'<a href="data:file/csv;base64,{b64}" download="trip_data.csv">Download CSV File</a>'
+    return href
+
+
 df = load_trip_data()
 
 df = df[df['trip_year'] == trip_year]
@@ -37,12 +45,12 @@ m = folium.Map([40.73, -73.95] ,zoom_start=12.4)
 for _, row in df.iloc[:top_routes].iterrows():
     folium.CircleMarker([row['start_station_latitude'], row['start_station_longitude']],
                         radius=10,
-                        fill_color="#3db7e4", # divvy color
+                        fill_color="#3db7e4", 
                        ).add_to(m)
 
     folium.CircleMarker([row['end_station_latitude'], row['end_station_longitude']],
                         radius=10,
-                        fill_color="red", # divvy color
+                        fill_color="red", 
                        ).add_to(m)
 
     folium.PolyLine([[row['start_station_latitude'], row['start_station_longitude']], 
@@ -52,3 +60,7 @@ st.write("Total trips: ", df.iloc[:top_routes]['Trips_on_route'].sum())
 
 folium_static(m)
 
+st.dataframe(df)
+
+
+st.sidebar.markdown(file_download(df), unsafe_allow_html=True)
